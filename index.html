@@ -65,6 +65,17 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 .chip{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px 8px;text-align:center}
 .chip-v{font-size:22px;font-weight:700;margin-bottom:2px}
 .chip-l{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{font-size:10px;font-weight:600;color:var(--text3);text-align:center;padding:4px 0;text-transform:uppercase}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;cursor:default}
+.cal-circle{width:88%;aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:2px solid transparent;transition:all .2s}
+.cal-circle.empty{color:var(--text3)}
+.cal-circle.rest{border-color:var(--border);color:var(--text2)}
+.cal-circle.done{border-color:var(--accent);background:rgba(200,240,90,.15);color:var(--accent)}
+.cal-circle.today-ring{border-color:var(--accent2)!important;box-shadow:0 0 0 2px rgba(124,106,247,.3)}
+.cal-circle.future{color:var(--text3);opacity:.4}
+.cal-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
+.cal-legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -115,12 +126,27 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
   <div id="prog-content"></div>
 </div>
 
+<!-- CALENDAR -->
+<div class="page" id="page-calendar">
+  <div class="header">
+    <div class="hrow">
+      <button onclick="prevMonth()" style="background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:0 8px">‹</button>
+      <h1 id="cal-title" style="font-size:20px"></h1>
+      <button onclick="nextMonth()" style="background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:0 8px">›</button>
+    </div>
+  </div>
+  <div id="cal-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px"></div>
+  <div id="cal-grid"></div>
+  <div id="cal-legend" style="margin-top:12px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap"></div>
+</div>
+
 <!-- MODAL -->
 <div class="mo hidden" id="clear-modal">
   <div class="mb">
-    <h2 style="margin-bottom:10px">¿Borrar historial?</h2>
-    <p style="color:var(--text2);font-size:14px;margin-bottom:18px">Se eliminarán todos los entrenamientos guardados.</p>
-    <button class="btn btn-d" onclick="clearAll()">Sí, borrar todo</button>
+    <h2 style="margin-bottom:10px">Borrar datos</h2>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:18px">¿Qué quieres borrar?</p>
+    <button class="btn btn-d" onclick="clearToday()" style="margin-bottom:8px">Borrar solo los datos de hoy</button>
+    <button class="btn btn-d" onclick="clearAll()" style="margin-bottom:8px;opacity:0.7">Borrar todo el historial</button>
     <button class="btn btn-g" onclick="hideClear()">Cancelar</button>
   </div>
 </div>
@@ -137,6 +163,9 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
   </button>
   <button id="nav-progress" onclick="go('progress')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>Progreso
+  </button>
+  <button id="nav-calendar" onclick="go('calendar')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendario
   </button>
 </nav>
 
@@ -158,6 +187,7 @@ function go(p){
   if(p==='home')renderHome();
   if(p==='history')renderHistory();
   if(p==='progress')renderProgressPage();
+  if(p==='calendar')renderCalendar();
 }
 
 function renderHome(){
@@ -208,7 +238,23 @@ function calcStreak(hist){
 
 function startW(key){
   curDay=key;wSets={};
-  R[key].exercises.forEach(ex=>{wSets[ex.id]=Array.from({length:ex.sets},()=>({reps:'',weight:'',done:false}));});
+  // preload existing sets from today's saved workout for this day if exists
+  const hist=gs('workouts',[]);
+  const today=new Date().toDateString();
+  const existing=hist.filter(w=>w.day===key&&new Date(w.date).toDateString()===today).pop();
+  R[key].exercises.forEach(ex=>{
+    if(existing){
+      const savedEx=existing.exercises.find(e=>e.id===ex.id);
+      if(savedEx&&savedEx.sets.length>0){
+        // fill done sets, pad with empty ones up to total
+        const filledSets=savedEx.sets.map(s=>({weight:s.weight||'',reps:s.reps||'',done:true}));
+        while(filledSets.length<ex.sets)filledSets.push({reps:'',weight:'',done:false});
+        wSets[ex.id]=filledSets;
+        return;
+      }
+    }
+    wSets[ex.id]=Array.from({length:ex.sets},()=>({reps:'',weight:'',done:false}));
+  });
   renderWorkout();go('workout');
 }
 
@@ -235,6 +281,7 @@ function renderWorkout(){
     const doneCnt=sets.filter(s=>s.done).length;
     const div=document.createElement('div');
     div.className='ex-item';
+    div.id='ex-item-'+ei;
     div.innerHTML=`
       <div class="ex-hd" onclick="toggleEx(${ei})">
         <div style="flex:1;min-width:0">
@@ -266,10 +313,42 @@ function toggleEx(ei){const b=document.getElementById('eb-'+ei);b.classList.togg
 function upSet(ei,si,f,v){const ex=R[curDay].exercises[ei];wSets[ex.id][si][f]=v;}
 function togSet(ei,si){
   const ex=R[curDay].exercises[ei];
-  const s=wSets[ex.id][si];s.done=!s.done;
-  renderWorkout();
+  const s=wSets[ex.id][si];
+  s.done=!s.done;
+
+  // actualizar solo la fila tocada, sin redibujar nada más
+  const row=document.getElementById('sr-'+ei+'-'+si);
+  if(row){
+    if(s.done){row.classList.add('set-done');}else{row.classList.remove('set-done');}
+    const btn=row.querySelector('button');
+    if(btn){
+      btn.textContent=s.done?'✓':'○';
+      btn.style.background=s.done?'rgba(90,240,168,.15)':'';
+      btn.style.borderColor=s.done?'rgba(90,240,168,.3)':'';
+      btn.style.color=s.done?'var(--success)':'';
+    }
+    row.querySelectorAll('input').forEach(inp=>{inp.style.color=s.done?'var(--success)':'';});
+  }
+
+  // actualizar contador y nombre del ejercicio
+  const sets=wSets[ex.id]||[];
+  const doneCnt=sets.filter(x=>x.done).length;
+  const allDone=sets.every(x=>x.done);
+  const hd=document.getElementById('ex-item-'+ei);
+  if(hd){
+    const nameEl=hd.querySelector('.ex-hd p:first-child');
+    if(nameEl){nameEl.textContent=(allDone?'✅ ':'')+ex.name;nameEl.style.color=allDone?'var(--success)':'';}
+    const metaEl=hd.querySelector('.ex-hd p:last-child');
+    if(metaEl){metaEl.textContent=`${ex.sets}×${ex.reps} ${ex.unit}${ex.note?' · '+ex.note:''} · ${doneCnt}/${ex.sets}`;}
+  }
+
+  // actualizar barra de progreso
   const total=Object.values(wSets).flat().length;
   const done=Object.values(wSets).flat().filter(x=>x.done).length;
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('w-prog').style.width=pct+'%';
+  document.getElementById('w-prog-lbl').textContent=`${done}/${total} series completadas`;
+
   if(done===total)toast('¡Entreno completado! 🎉');
 }
 
@@ -279,7 +358,12 @@ function finishWorkout(){
   const doneSets=Object.values(wSets).flat().filter(s=>s.done).length;
   if(doneSets===0){toast('Marca al menos una serie ✓');return;}
   const workout={date:Date.now(),day:curDay,dayName:day.name,exercises:day.exercises.map(ex=>({id:ex.id,name:ex.name,unit:ex.unit,sets:(wSets[ex.id]||[]).filter(s=>s.done).map(s=>({weight:parseFloat(s.weight)||0,reps:s.reps||'0'}))})).filter(ex=>ex.sets.length>0)};
-  const hist=gs('workouts',[]);hist.push(workout);ss('workouts',hist);
+  // reemplazar el registro de hoy si ya existe, en lugar de duplicar
+  const today=new Date().toDateString();
+  let hist=gs('workouts',[]);
+  hist=hist.filter(w=>!(w.day===curDay&&new Date(w.date).toDateString()===today));
+  hist.push(workout);
+  ss('workouts',hist);
   curDay=null;wSets={};
   toast('✓ Entrenamiento guardado');
   go('home');
@@ -362,6 +446,129 @@ function renderProgress(){
 function showClearModal(){document.getElementById('clear-modal').classList.remove('hidden');}
 function hideClear(){document.getElementById('clear-modal').classList.add('hidden');}
 function clearAll(){localStorage.removeItem('workouts');hideClear();toast('Historial borrado');renderHistory();}
+function clearToday(){
+  const hist=gs('workouts',[]);
+  const today=new Date().toDateString();
+  const filtered=hist.filter(w=>new Date(w.date).toDateString()!==today);
+  ss('workouts',filtered);
+  hideClear();
+  toast('Datos de hoy borrados');
+  renderHistory();
+}
+
+let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+const MONTHS_ES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAY_COLORS={lunes:'#c8f05a',martes:'#7c6af7',jueves:'#f0a85a',viernes:'#5af0a8',sabado:'#f05a8a',domingo:'#5ab4f0'};
+
+function prevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function nextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
+function makeSVGCircle(pct, dayNum, isToday, isFuture, dayKey){
+  const size=44, cx=22, cy=22, r=17;
+  const circ=2*Math.PI*r;
+  const dash=circ*(pct/100);
+  const dashGap=circ-dash;
+  const color=dayKey?DAY_COLORS[dayKey]||'#c8f05a':'#333';
+  const todayGlow=isToday?`<circle cx="${cx}" cy="${cy}" r="20" fill="none" stroke="#7c6af7" stroke-width="1.5" opacity="0.7"/>`:'' ;
+
+  const track=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1e1e28" stroke-width="3.5"/>`;
+  const arc=pct>0?`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="3.5"
+    stroke-dasharray="${dash} ${dashGap}" stroke-dashoffset="${circ*0.25}"
+    stroke-linecap="round" opacity="${pct>=100?1:0.85}"/>`:'' ;
+  const dot=pct>0?`<circle cx="${cx}" cy="${cy}" r="3" fill="${color}" opacity="0.8"/>`:
+    `<circle cx="${cx}" cy="${cy}" r="2" fill="${isFuture?'#1e1e28':'#2a2a38'}"/>`;
+  const numColor='#e0e0ee';
+
+  return `<svg viewBox="0 0 ${size} ${size}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    ${todayGlow}${track}${arc}${dot}
+    <text x="${cx}" y="${size-3}" text-anchor="middle" font-size="8" font-weight="700" fill="${numColor}" font-family="-apple-system,sans-serif">${dayNum}</text>
+  </svg>`;
+}
+
+function renderCalendar(){
+  const hist=gs('workouts',[]);
+  const now=new Date();
+  document.getElementById('cal-title').textContent=`${MONTHS_ES[calMonth]} ${calYear}`;
+
+  // build map: dateKey -> {day, pct, doneSetsMap}
+  const trainedMap={};
+  hist.forEach(w=>{
+    if(!w.day||!R[w.day])return; // guard contra datos corruptos
+    const d=new Date(w.date);
+    if(d.getFullYear()===calYear && d.getMonth()===calMonth){
+      const key=`${calYear}-${calMonth}-${d.getDate()}`;
+      const doneSetsMap={};
+      w.exercises.forEach(ex=>{ doneSetsMap[ex.id]=ex.sets.length; });
+      const totalExpected=R[w.day].exercises.reduce((s,ex)=>s+ex.sets,0);
+      const doneSets=w.exercises.reduce((s,ex)=>s+ex.sets.length,0);
+      const pct=totalExpected>0?Math.min(100,Math.round(doneSets/totalExpected*100)):100;
+      if(!trainedMap[key]||pct>trainedMap[key].pct)
+        trainedMap[key]={day:w.day, pct, doneSetsMap};
+    }
+  });
+
+  // stats
+  const totalDays=Object.keys(trainedMap).length;
+  const fullDays=Object.values(trainedMap).filter(v=>v.pct>=100).length;
+  const streak=calcStreakUpTo(hist,calYear,calMonth);
+  const stats=document.getElementById('cal-stats');
+  stats.innerHTML=`
+    <div class="chip"><div class="chip-v" style="color:var(--accent)">${totalDays}</div><div class="chip-l">Entrenos</div></div>
+    <div class="chip"><div class="chip-v" style="color:var(--success)">${fullDays}</div><div class="chip-l">Completos ✓</div></div>
+    <div class="chip"><div class="chip-v">${streak}🔥</div><div class="chip-l">Racha</div></div>`;
+
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const startOffset=(firstDay+6)%7;
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML='';
+  const wrap=document.createElement('div');wrap.className='cal-grid';
+
+  ['L','M','X','J','V','S','D'].forEach(d=>{
+    const h=document.createElement('div');h.className='cal-dow';h.textContent=d;wrap.appendChild(h);
+  });
+
+  for(let i=0;i<startOffset;i++){
+    const e=document.createElement('div');e.className='cal-day';wrap.appendChild(e);
+  }
+
+  for(let day=1;day<=daysInMonth;day++){
+    const cell=document.createElement('div');cell.className='cal-day';
+    const dateKey=`${calYear}-${calMonth}-${day}`;
+    const cellDate=new Date(calYear,calMonth,day);
+    const isToday=cellDate.toDateString()===now.toDateString();
+    const isFuture=cellDate>now;
+    const entry=trainedMap[dateKey];
+
+    let svg='';
+    if(entry){
+      svg=makeSVGCircle(entry.pct, day, isToday, false, entry.day);
+    } else {
+      svg=makeSVGCircle(0, day, isToday, isFuture, null);
+    }
+    cell.innerHTML=svg;
+    wrap.appendChild(cell);
+  }
+  grid.appendChild(wrap);
+
+  // legend
+  const leg=document.getElementById('cal-legend');
+  leg.innerHTML='';
+  Object.entries(DAY_COLORS).forEach(([day,color])=>{
+    const item=document.createElement('div');item.className='cal-legend-item';
+    item.innerHTML=`<div class="cal-legend-dot" style="background:${color}"></div><span style="font-size:11px">${R[day].name}</span>`;
+    leg.appendChild(item);
+  });
+}
+
+function calcStreakUpTo(hist,year,month){
+  if(!hist.length)return 0;
+  const dates=[...new Set(hist.map(w=>new Date(w.date).toDateString()))].map(d=>new Date(d)).sort((a,b)=>b-a);
+  const ref=new Date();ref.setHours(0,0,0,0);
+  let s=0,c=new Date(ref);
+  for(const d of dates){const dc=new Date(d);dc.setHours(0,0,0,0);if(dc.getTime()===c.getTime()){s++;c.setDate(c.getDate()-1);}else if(dc<c)break;}
+  return s;
+}
 
 renderHome();
 </script>
