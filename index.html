@@ -141,7 +141,12 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
   <div class="header">
     <div class="hrow">
       <h1>Historial</h1>
-      <button onclick="showClearModal()" style="background:none;border:none;color:var(--text2);font-size:13px;cursor:pointer">Borrar todo</button>
+      <button onclick="showClearModal()" style="background:none;border:none;color:var(--text2);font-size:13px;cursor:pointer">Borrar</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="exportData()" class="btn btn-g" style="flex:1;margin:0;padding:9px;font-size:13px">⬆ Exportar copia</button>
+      <button onclick="document.getElementById('import-file').click()" class="btn btn-g" style="flex:1;margin:0;padding:9px;font-size:13px">⬇ Importar copia</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)">
     </div>
   </div>
   <div id="hist-list"></div>
@@ -834,6 +839,46 @@ function renderProgress(){
       },150);
     }
   }
+}
+
+function exportData(){
+  // collect all localStorage keys belonging to this app
+  const data={workouts:gs('workouts',[]),nutrition:{}};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('nut-')) data.nutrition[k]=gs(k,null);
+  }
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const d=new Date();
+  a.href=url;
+  a.download='gymtracker-backup-'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✓ Copia exportada');
+}
+
+function importData(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.workouts){ss('workouts',data.workouts);}
+      if(data.nutrition){
+        Object.entries(data.nutrition).forEach(([k,v])=>{if(k.startsWith('nut-'))ss(k,v);});
+      }
+      toast('✓ Datos restaurados correctamente');
+      renderHistory();
+    }catch(err){
+      toast('Error: archivo no válido');
+    }
+  };
+  reader.readAsText(file);
+  input.value='';
 }
 
 function showClearModal(){document.getElementById('clear-modal').classList.remove('hidden');}
