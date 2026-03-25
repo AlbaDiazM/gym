@@ -8,65 +8,6 @@
 <meta name="theme-color" content="#0a0a0f">
 <title>GymTracker</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyB0p0KccOvclGRfy5hqX_Wx8KS_YaQls2A",
-  authDomain: "albadiazm.github.io",
-  projectId: "gymtracker-4d416",
-  storageBucket: "gymtracker-4d416.firebasestorage.app",
-  messagingSenderId: "203419007621",
-  appId: "1:203419007621:web:3f7c62ef5edfc101fcc7ec"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const functions = getFunctions(app, 'europe-west1');
-
-window._fb = { auth, db, functions, GoogleAuthProvider, signInWithRedirect, signOut, onAuthStateChanged, doc, setDoc, getDoc, httpsCallable };
-
-// Handle redirect result first
-getRedirectResult(auth).then(result => {
-  if(result && result.user) {
-    console.log('Redirect login OK:', result.user.displayName);
-  }
-}).catch(err => {
-  console.error('Redirect error:', err);
-});
-
-// Auth state listener
-onAuthStateChanged(auth, user => {
-  window._hideSplash && window._hideSplash();
-  if(user){
-    window._fbUser = user;
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app-root').style.display='block';
-    window._migrateLocalToFirebase && window._migrateLocalToFirebase();
-    window.renderHome && window.renderHome();
-  } else {
-    window._fbUser = null;
-    document.getElementById('login-screen').style.display='flex';
-    document.getElementById('app-root').style.display='none';
-  }
-});
-
-window._signIn = async () => {
-  try {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    await signInWithRedirect(auth, provider);
-  } catch(e) { console.error('SignIn error:', e); }
-};
-
-window._signOut = async () => {
-  await signOut(auth);
-};
-</script>
 <style>
 :root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c26;--surface3:#252530;--accent:#c8f05a;--accent2:#7c6af7;--text:#f0f0f5;--text2:#8888a0;--text3:#555568;--border:#2a2a38;--danger:#f05a5a;--warn:#f0a85a;--success:#5af0a8;--r:16px;--rs:10px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -140,39 +81,6 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </style>
 </head>
 <body>
-<!-- SPLASH SCREEN -->
-<div id="splash" style="position:fixed;inset:0;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s">
-  <div style="text-align:center">
-    <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#c8f05a,#7c6af7);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 20px">💪</div>
-    <p style="font-size:13px;color:#8888a0;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px">GymTracker</p>
-    <p style="font-size:15px;color:#555568;margin-top:16px">Cargando...</p>
-  </div>
-  <div style="position:absolute;bottom:60px;display:flex;gap:6px">
-    <div style="width:6px;height:6px;border-radius:50%;background:#c8f05a;animation:dot 1.2s infinite"></div>
-    <div style="width:6px;height:6px;border-radius:50%;background:#7c6af7;animation:dot 1.2s .2s infinite"></div>
-    <div style="width:6px;height:6px;border-radius:50%;background:#5af0a8;animation:dot 1.2s .4s infinite"></div>
-  </div>
-</div>
-<style>
-@keyframes dot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
-</style>
-
-<!-- LOGIN SCREEN -->
-<div id="login-screen" style="display:none;position:fixed;inset:0;background:#0a0a0f;flex-direction:column;align-items:center;justify-content:center;z-index:999;padding:40px 24px">
-  <div style="text-align:center;margin-bottom:48px">
-    <p style="font-size:13px;color:#8888a0;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px">GymTracker</p>
-    <h1 style="font-size:32px;font-weight:700;letter-spacing:-1px;margin-bottom:12px">Tu entreno,<br>tu progreso 💪</h1>
-    <p style="font-size:15px;color:#8888a0;line-height:1.6">Registra tus entrenamientos,<br>nutrición y evolución</p>
-  </div>
-  <button onclick="this.textContent='Redirigiendo...';this.disabled=true;window._signIn()" style="width:100%;max-width:320px;background:#fff;border:none;border-radius:14px;padding:16px 24px;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-size:16px;font-weight:600;color:#1a1a1a">
-    <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-    Continuar con Google
-  </button>
-  <p style="font-size:12px;color:#555568;margin-top:12px;text-align:center">Te redirigiremos a Google para iniciar sesión</p>
-</div>
-
-<!-- APP ROOT -->
-<div id="app-root" style="display:none">
 <div id="toast"></div>
 
 <!-- HOME -->
@@ -180,7 +88,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
   <div class="header">
     <div class="hrow">
       <div><p style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">GymTracker</p><h1 id="h-greet">¡Hola! 💪</h1></div>
-      <div style="text-align:right"><p style="font-size:12px;color:var(--text2)" id="h-date"></p><p style="font-size:13px;font-weight:600;color:var(--accent)" id="h-streak"></p><button onclick="window._signOut()" style="background:none;border:none;color:#555568;font-size:11px;cursor:pointer;margin-top:2px" id="h-user"></button></div>
+      <div style="text-align:right"><p style="font-size:12px;color:var(--text2)" id="h-date"></p><p style="font-size:13px;font-weight:600;color:var(--accent)" id="h-streak"></p></div>
     </div>
   </div>
   <div id="h-banner"></div>
@@ -649,7 +557,7 @@ function renderNutrition(){
       s.checked=s.checked||{};
       s.checked[meal.id]=!s.checked[meal.id];
       ss(storeKey,s);
-      if(window.ssFB)window.ssFB(storeKey,s);
+
       renderNutrition();
     };
     cont.appendChild(card);
@@ -696,7 +604,7 @@ function saveTotalBurned(val){
   const s=gs(storeKey,{checked:{},extraKcal:0,totalBurnedOverride:0});
   s.totalBurnedOverride=parseInt(val)||0;
   ss(storeKey,s);
-  if(window.ssFB)window.ssFB(storeKey,s);
+
   renderNutrition();
 }
 
@@ -705,7 +613,7 @@ function saveExtraKcal(val){
   const s=gs(storeKey,{checked:{},extraKcal:0,extraItems:[],totalBurnedOverride:0});
   s.extraKcal=parseInt(val)||0;
   ss(storeKey,s);
-  if(window.ssFB)window.ssFB(storeKey,s);
+
 }
 
 function clearExtraItems(){
@@ -713,7 +621,7 @@ function clearExtraItems(){
   const s=gs(storeKey,{checked:{},extraKcal:0,extraItems:[],totalBurnedOverride:0});
   s.extraItems=[];
   ss(storeKey,s);
-  if(window.ssFB)window.ssFB(storeKey,s);
+
   renderNutrition();
 }
 
@@ -906,7 +814,7 @@ function addAICalories(kcal,items){
   s.extraItems=s.extraItems||[];
   if(items&&items.length)s.extraItems=s.extraItems.concat(items);
   ss(storeKey,s);
-  if(window.ssFB)window.ssFB(storeKey,s);
+
   document.getElementById('ai-food-input').value='';
   document.getElementById('ai-result').innerHTML='';
   toast('✓ '+kcal+' kcal añadidas a extras');
@@ -922,9 +830,6 @@ function renderHome(){
   document.getElementById('h-date').textContent=`${days[now.getDay()]} ${now.getDate()} de ${months[now.getMonth()]}`;
   const h=now.getHours();
   document.getElementById('h-greet').textContent=h<12?'¡Buenos días! 🌅':h<18?'¡Buenas tardes! ☀️':'¡Buenas noches! 🌙';
-  // show user name
-  const userBtn=document.getElementById('h-user');
-  if(userBtn&&window._fbUser) userBtn.textContent=window._fbUser.displayName?window._fbUser.displayName.split(' ')[0]+' · Salir':'Salir';
   const hist=gs('workouts',[]);
   const str=calcStreak(hist);
   document.getElementById('h-streak').textContent=str>0?`${str} días seguidos 🔥`:'';
@@ -1139,7 +1044,7 @@ function confirmFinish(){
   hist=hist.filter(w=>!(w.day===curDay&&new Date(w.date).toDateString()===workoutDateStr));
   hist.push(workout);
   ss('workouts',hist);
-  if(window.ssFB) window.ssFB('workouts', hist);
+
   curDay=null;wSets={};timerStart=null;curWorkoutDate=null;
   toast('✓ Entrenamiento guardado');
   go('home');
@@ -1730,80 +1635,10 @@ function calcStreakUpTo(hist,year,month){
 
 renderHome();
 
-// ── FIREBASE DATA LAYER ──────────────────────────────────────────
-// Replace localStorage with Firestore, keeping same API surface
-
-async function fbSet(key, val){
-  if(!window._fbUser) return ss(key, val);
-  const uid = window._fbUser.uid;
-  const {db, doc, setDoc} = window._fb;
-  try {
-    await setDoc(doc(db, 'users', uid, 'data', key), {value: JSON.stringify(val)});
-    ss(key, val); // keep local cache
-  } catch(e) { ss(key, val); }
-}
-
-async function fbGet(key, def){
-  if(!window._fbUser) return gs(key, def);
-  const uid = window._fbUser.uid;
-  const {db, doc, getDoc} = window._fb;
-  try {
-    const snap = await getDoc(doc(db, 'users', uid, 'data', key));
-    if(snap.exists()) {
-      const val = JSON.parse(snap.data().value);
-      ss(key, val); // update local cache
-      return val;
-    }
-    return gs(key, def);
-  } catch(e) { return gs(key, def); }
-}
-
-// Migrate existing localStorage data to Firebase on first login
-window._migrateLocalToFirebase = async () => {
-  const workouts = gs('workouts', null);
-  if(workouts && workouts.length > 0) {
-    await fbSet('workouts', workouts);
-    // migrate nutrition data
-    for(let i=0; i<localStorage.length; i++){
-      const k = localStorage.key(i);
-      if(k && k.startsWith('nut-')) {
-        const v = gs(k, null);
-        if(v) await fbSet(k, v);
-      }
-    }
-    toast('✓ Datos migrados a la nube');
-  }
-};
-
-// Override gs/ss to sync with Firebase automatically
-const _gsOrig = gs, _ssOrig = ss;
-window.gsFB = async (key, def) => await fbGet(key, def);
-window.ssFB = async (key, val) => { _ssOrig(key, val); await fbSet(key, val); };
-
-// ── AI CALORIES VIA FIREBASE FUNCTIONS ──────────────────────────
-async function calcAICaloriesCloud(food){
-  const {functions, httpsCallable} = window._fb;
-  const calcCalories = httpsCallable(functions, 'calcCalories');
-  const result = await calcCalories({ food });
-  return result.data;
-}
-// ── END FIREBASE ─────────────────────────────────────────────────
-
-// Register Service Worker
+// Register Service Worker for faster loads
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
-</script>
-
-<script>
-// Hide splash once Firebase auth resolves (max 4s fallback)
-function hideSplash(){
-  const s=document.getElementById('splash');
-  if(s){s.style.opacity='0';setTimeout(()=>s.remove(),400);}
-}
-setTimeout(hideSplash, 4000); // fallback
-// Will also be called by onAuthStateChanged
-window._hideSplash=hideSplash;
 </script>
 </body>
 </html>
