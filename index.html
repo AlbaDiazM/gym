@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="GymTracker">
 <meta name="theme-color" content="#0a0a0f">
 <title>GymTracker</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 <style>
 :root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c26;--surface3:#252530;--accent:#c8f05a;--accent2:#7c6af7;--text:#f0f0f5;--text2:#8888a0;--text3:#555568;--border:#2a2a38;--danger:#f05a5a;--warn:#f0a85a;--success:#5af0a8;--r:16px;--rs:10px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -1635,9 +1635,11 @@ function calcStreakUpTo(hist,year,month){
 
 renderHome();
 
-// Register Service Worker for faster loads
+// Limpiar cualquier Service Worker antiguo
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>r.unregister());
+  });
 }
 </script>
 </body>
