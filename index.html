@@ -183,6 +183,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
           <p style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Tiempo</p>
           <p id="w-timer" style="font-size:18px;font-weight:700;font-family:monospace;color:var(--accent2);letter-spacing:1px">00:00</p>
         </div>
+        <button class="bicon" onclick="cancelWorkout()" title="Cancelar" style="background:rgba(240,90,90,.1);border-color:rgba(240,90,90,.3);color:var(--danger);font-size:16px">✕</button>
         <button class="bicon" onclick="finishWorkout()" title="Finalizar" style="background:rgba(200,240,90,.1);border-color:rgba(200,240,90,.3);color:var(--accent);font-size:18px">✓</button>
       </div>
     </div>
@@ -191,6 +192,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
   </div>
   <div id="ex-list"></div>
   <button class="btn btn-p" onclick="finishWorkout()">Finalizar entrenamiento ✓</button>
+  <button class="btn btn-d" onclick="cancelWorkout()" style="margin-top:6px">Cancelar entreno</button>
 </div>
 
 <!-- HISTORY -->
@@ -280,6 +282,23 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
     <textarea id="ai-food-input" placeholder="Ej: tres porciones de pizza margarita, una coca-cola y un helado de chocolate..." style="width:100%;background:#1c1c26;border:1px solid #2a2a38;border-radius:10px;color:#f0f0f5;font-size:14px;padding:12px;outline:none;resize:none;height:80px;font-family:-apple-system,sans-serif;line-height:1.5"></textarea>
     <button onclick="calcAICalories()" id="ai-btn" style="width:100%;margin-top:10px;background:#7c6af7;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;padding:12px;cursor:pointer">Calcular ✨</button>
     <div id="ai-result" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- MODAL OPCIONES DÍA -->
+<div class="mo hidden" id="day-options-modal">
+  <div class="mb">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 id="day-options-title">Opciones</h2>
+      <button onclick="document.getElementById('day-options-modal').classList.add('hidden')" style="background:none;border:none;color:#8888a0;font-size:22px;cursor:pointer">✕</button>
+    </div>
+    <button id="day-opt-summary" class="btn btn-g" style="width:100%;margin-bottom:8px;text-align:left;padding:14px 16px" onclick="dayOptSummary()">
+      📊 Ver resumen del día
+    </button>
+    <button id="day-opt-past" class="btn btn-p" style="width:100%;margin-bottom:8px;text-align:left;padding:14px 16px" onclick="dayOptPast()">
+      ➕ Añadir entreno en este día
+    </button>
+    <button class="btn btn-g" style="width:100%;opacity:0.6" onclick="document.getElementById('day-options-modal').classList.add('hidden')">Cancelar</button>
   </div>
 </div>
 
@@ -895,7 +914,7 @@ function renderHome(){
   const banner=document.getElementById('h-banner');
   if(curDay){
     const d=R[curDay];
-    banner.innerHTML=`<div class="banner" onclick="go('workout')"><div style="display:flex;align-items:center"><div class="dot"><\/div><div><p style="font-size:14px;font-weight:600">Entreno activo: ${d.name}<\/p><p style="font-size:12px;color:var(--accent2)">Toca para continuar →<\/p><\/div><\/div><\/div>`;
+    banner.innerHTML='<div class="banner"><div style="display:flex;align-items:center;flex:1" onclick="go(\'workout\')"><div class="dot"><\/div><div><p style="font-size:14px;font-weight:600">Entreno activo: '+d.name+'<\/p><p style="font-size:12px;color:var(--accent2)">Toca para continuar →<\/p><\/div><\/div><button onclick="cancelWorkout()" style="background:rgba(240,90,90,.1);border:1px solid rgba(240,90,90,.3);border-radius:8px;color:var(--danger);font-size:12px;padding:5px 10px;cursor:pointer;flex-shrink:0">Cancelar<\/button><\/div>';
   }else{banner.innerHTML='';}
   const cont=document.getElementById('days-list');
   cont.innerHTML='';
@@ -1066,6 +1085,14 @@ function togSet(ei,si){
   document.getElementById('w-prog-lbl').textContent=`${done}/${total} series completadas`;
 
   if(done===total)toast('¡Entreno completado! 🎉');
+}
+
+function cancelWorkout(){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  curDay=null;wSets={};timerStart=null;curWorkoutDate=null;
+  document.getElementById('finish-modal').classList.add('hidden');
+  toast('Entreno cancelado');
+  go('home');
 }
 
 function finishWorkout(){
@@ -1532,7 +1559,7 @@ function renderCalendar(){
     cell.onclick=(()=>{
       const dk=dateKey;
       const cd=new Date(cellDate);
-      return ()=>showDaySummary(dk,cd);
+      return ()=>showDayOptions(dk,cd);
     })();
     wrap.appendChild(cell);
   }
@@ -1543,6 +1570,41 @@ function renderCalendar(){
   leg.innerHTML=
     '<div class="cal-legend-item"><div class="cal-legend-dot" style="background:#5af0a8"><\/div><span style="font-size:11px">Entreno<\/span><\/div>'+
     '<div class="cal-legend-item"><div class="cal-legend-dot" style="background:#f05ab4"><\/div><span style="font-size:11px">Déficit calórico<\/span><\/div>';
+}
+
+let _dayOptKey=null, _dayOptDate=null;
+
+function showDayOptions(dateKey, cellDate){
+  _dayOptKey=dateKey;
+  _dayOptDate=cellDate;
+  const days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const months=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const isFuture=cellDate>new Date();
+  document.getElementById('day-options-title').textContent=
+    days[cellDate.getDay()]+' '+cellDate.getDate()+' '+months[cellDate.getMonth()];
+  // hide summary for future days with no data
+  document.getElementById('day-opt-summary').style.display=isFuture?'none':'block';
+  document.getElementById('day-opt-past').style.display=isFuture?'none':'block';
+  document.getElementById('day-options-modal').classList.remove('hidden');
+}
+
+function dayOptSummary(){
+  document.getElementById('day-options-modal').classList.add('hidden');
+  showDaySummary(_dayOptKey, _dayOptDate);
+}
+
+function dayOptPast(){
+  document.getElementById('day-options-modal').classList.add('hidden');
+  // Pre-fill past modal with selected date
+  const d=_dayOptDate;
+  const pad=n=>String(n).padStart(2,'0');
+  document.getElementById('past-date').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  document.getElementById('past-calories').value='';
+  // pre-select the right day of week
+  const wdMap={0:'domingo',1:'lunes',2:'martes',3:'lunes',4:'jueves',5:'viernes',6:'sabado'};
+  const suggested=wdMap[d.getDay()]||'lunes';
+  document.getElementById('past-day-select').value=suggested;
+  document.getElementById('past-modal').classList.remove('hidden');
 }
 
 function hideDaySummary(){document.getElementById('day-summary-modal').classList.add('hidden');}
