@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -84,6 +85,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 <div id="toast"></div>
 
 <!-- HOME -->
+
 <div class="page active" id="page-home">
   <div class="header">
     <div class="hrow">
@@ -92,11 +94,15 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
     </div>
   </div>
   <div id="h-banner"></div>
-  <p style="font-size:11px;color:var(--text2);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Rutina semanal</p>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <p style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Rutina semanal</p>
+    <button onclick="showRoutineEdit()" style="background:none;border:none;color:#7c6af7;font-size:12px;cursor:pointer;font-weight:500">✏️ Editar rutina</button>
+  </div>
   <div id="days-list"></div>
 </div>
 
 <!-- WORKOUT -->
+
 <div class="page" id="page-workout">
   <div class="header">
     <div class="hrow">
@@ -122,6 +128,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </div>
 
 <!-- HISTORY -->
+
 <div class="page" id="page-history">
   <div class="header">
     <div class="hrow">
@@ -139,6 +146,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </div>
 
 <!-- PROGRESS -->
+
 <div class="page" id="page-progress">
   <div class="header"><h1>Progreso</h1></div>
   <div style="display:flex;gap:8px;margin-bottom:16px">
@@ -155,6 +163,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </div>
 
 <!-- CALENDAR -->
+
 <div class="page" id="page-calendar">
   <div class="header">
     <div class="hrow">
@@ -168,7 +177,63 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
   <div id="cal-legend" style="margin-top:12px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap"></div>
 </div>
 
+<!-- MODAL SUSTITUIR EJERCICIO -->
+
+<div class="mo hidden" id="swap-modal">
+  <div class="mb">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h2>Cambiar ejercicio</h2>
+      <button onclick="hideSwapModal()" style="background:none;border:none;color:#8888a0;font-size:22px;cursor:pointer">✕</button>
+    </div>
+    <p id="swap-replacing" style="font-size:13px;color:#8888a0;margin-bottom:14px"></p>
+    <input type="text" id="swap-input" placeholder="Escribe el ejercicio alternativo..." oninput="filterSwapSuggestions(this.value)"
+      style="width:100%;background:#1c1c26;border:1px solid #2a2a38;border-radius:10px;color:#f0f0f5;font-size:15px;padding:11px 14px;outline:none;margin-bottom:10px">
+    <div id="swap-suggestions" style="margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:1">
+        <label>Series</label>
+        <input type="number" id="swap-sets" value="3" inputmode="numeric" style="text-align:center">
+      </div>
+      <div style="flex:1">
+        <label>Reps</label>
+        <input type="text" id="swap-reps" value="10" style="text-align:center">
+      </div>
+      <div style="flex:1">
+        <label>Unidad</label>
+        <input type="text" id="swap-unit" value="kg" style="text-align:center">
+      </div>
+    </div>
+    <button class="btn btn-p" onclick="confirmSwap(false)" style="margin-bottom:8px">Cambiar solo hoy</button>
+    <button class="btn btn-g" onclick="confirmSwap(true)" style="margin-bottom:8px;border-color:rgba(200,240,90,.3);color:#c8f05a">Cambiar y guardar en mi rutina</button>
+    <button class="btn btn-g" onclick="hideSwapModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL EDITAR RUTINA -->
+
+<div class="mo hidden" id="routine-edit-modal">
+  <div class="mb" style="max-height:88vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2>Mi rutina</h2>
+      <button onclick="hideRoutineEdit()" style="background:none;border:none;color:#8888a0;font-size:22px;cursor:pointer">✕</button>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="sw"><select id="routine-edit-day" onchange="renderRoutineEditDay()" style="font-size:15px">
+        <option value="lunes">🍑 Lunes</option>
+        <option value="martes">🦵 Martes</option>
+        <option value="jueves">💪 Jueves</option>
+        <option value="viernes">🏋️ Viernes</option>
+        <option value="sabado">🔥 Sábado</option>
+        <option value="domingo">🌿 Domingo</option>
+      </select></div>
+    </div>
+    <div id="routine-edit-list"></div>
+    <button class="btn btn-p" onclick="addRoutineExercise()" style="margin-top:4px">+ Añadir ejercicio</button>
+  </div>
+</div>
+
 <!-- MODAL -->
+
 <div class="mo hidden" id="clear-modal">
   <div class="mb">
     <h2 style="margin-bottom:10px">Borrar datos</h2>
@@ -180,6 +245,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </div>
 
 <!-- NUTRICIÓN -->
+
 <div class="page" id="page-nutrition">
   <div class="header">
     <div class="hrow">
@@ -197,6 +263,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
   <div id="nut-meals"></div>
 
   <!-- AI CALORIE CALCULATOR -->
+
   <div style="background:#13131a;border:1px solid #2a2a38;border-radius:16px;padding:16px;margin-top:8px;margin-bottom:20px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
       <span style="font-size:20px">🤖</span>
@@ -212,6 +279,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </div>
 
 <!-- MODAL OPCIONES DÍA -->
+
 <div class="mo hidden" id="day-options-modal">
   <div class="mb">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -229,6 +297,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </div>
 
 <!-- MODAL RESUMEN DÍA -->
+
 <div class="mo hidden" id="day-summary-modal">
   <div class="mb" style="max-height:88vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -240,6 +309,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </div>
 
 <!-- MODAL FINALIZAR -->
+
 <div class="mo hidden" id="finish-modal">
   <div class="mb">
     <h2 style="margin-bottom:6px">¡Entreno finalizado! 💪</h2>
@@ -260,6 +330,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </div>
 
 <!-- MODAL ENTRENO PASADO -->
+
 <div class="mo hidden" id="past-modal">
   <div class="mb">
     <h2 style="margin-bottom:6px">Añadir entreno pasado</h2>
@@ -298,6 +369,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </div>
 
 <!-- MODAL EDITAR ENTRENO -->
+
 <div class="mo hidden" id="edit-modal">
   <div class="mb" style="max-height:85vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -326,6 +398,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </div>
 
 <!-- MODAL SELECCIÓN RUTINA -->
+
 <div class="mo hidden" id="routine-modal">
   <div class="mb">
     <h2 style="margin-bottom:6px">¿Qué entrenas hoy?</h2>
@@ -357,7 +430,7 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:v
 </nav>
 
 <script>
-const R={lunes:{name:"Lunes",emoji:"🍑",cardio:null,exercises:[{id:"puente_gluteo",name:"Puente de glúteo",sets:2,reps:"15",unit:"kg",note:"Calentamiento"},{id:"desplaz_lateral",name:"Desplazamiento lateral con banda",sets:2,reps:"20",unit:"banda",note:"Calentamiento"},{id:"zancadas_manc",name:"Zancadas con mancuernas",sets:3,reps:"20",unit:"kg c/mano"},{id:"peso_muerto",name:"Peso muerto",sets:3,reps:"15",unit:"kg"},{id:"kettlebell_swing",name:"Kettlebell swing",sets:3,reps:"20",unit:"kg"}]},martes:{name:"Martes",emoji:"🦵",cardio:"15 min calentamiento",exercises:[{id:"puente_gluteo",name:"Puente de glúteo",sets:2,reps:"15",unit:"kg",note:"Calentamiento"},{id:"desplaz_lateral",name:"Desplazamiento lateral con banda",sets:2,reps:"20",unit:"banda",note:"Calentamiento"},{id:"squat_sumo",name:"Sentadilla sumo en multipower",sets:3,reps:"8-12",unit:"kg"},{id:"hip_thrust_maq",name:"Hip Thrust con máquina",sets:3,reps:"8-12",unit:"kg"},{id:"peso_muerto_rum",name:"Peso muerto rumano",sets:3,reps:"8-12",unit:"kg"},{id:"abduccion",name:"Abducción de cadera en máquina",sets:3,reps:"10+10",unit:"kg",note:"10 pesadas + 10 ligeras"},{id:"gemelos",name:"Extensión de gemelos",sets:3,reps:"8-12",unit:"kg"},{id:"plancha",name:"Plancha isométrica",sets:3,reps:"45-60s",unit:"seg"}]},jueves:{name:"Jueves",emoji:"💪",cardio:"15 min cardio",exercises:[{id:"mov_hombro_1",name:"Movilidad hombro (flexión antepulsión)",sets:2,reps:"12-15",unit:"kg",note:"Superserie"},{id:"mov_hombro_2",name:"Movilidad hombro (extensión)",sets:2,reps:"12-15",unit:"kg",note:"Superserie"},{id:"flexiones",name:"Flexiones",sets:3,reps:"12",unit:"corporal"},{id:"remo_barra",name:"Remos con barra",sets:3,reps:"8-12",unit:"kg"},{id:"remo_uni",name:"Remo unilateral con mancuerna",sets:3,reps:"8-12",unit:"kg"},{id:"elev_lat",name:"Elevaciones laterales",sets:3,reps:"10+10",unit:"kg",note:"10 pesadas + 10 ligeras"},{id:"aperturas_post",name:"Aperturas posteriores hombro",sets:3,reps:"12-15",unit:"kg"},{id:"curl_biceps",name:"Curl de bíceps con mancuernas",sets:3,reps:"8-12",unit:"kg"}]},viernes:{name:"Viernes",emoji:"🏋️",cardio:"15 min calentamiento",exercises:[{id:"puente_gluteo",name:"Puente de glúteo",sets:2,reps:"15",unit:"kg",note:"Calentamiento"},{id:"desplaz_lateral",name:"Desplazamiento lateral con banda",sets:2,reps:"20",unit:"banda",note:"Calentamiento"},{id:"squat_bulgara",name:"Sentadilla búlgara con mancuernas",sets:3,reps:"8-12",unit:"kg"},{id:"squat_step",name:"Sentadilla en STEP (ROM aumentado)",sets:3,reps:"12-15",unit:"kg"},{id:"curl_femoral",name:"Curl de femoral tumbada",sets:3,reps:"8-12",unit:"kg"},{id:"hyperext",name:"Hiperextensión 45°",sets:3,reps:"10+10",unit:"kg",note:"10 pesadas + 10 ligeras"},{id:"ext_cuad",name:"Extensión de cuádriceps",sets:3,reps:"10+10",unit:"kg",note:"10 pesadas + 10 ligeras"}]},sabado:{name:"Sábado",emoji:"🔥",cardio:"15 min cardio + 30 min cardio final",exercises:[{id:"mov_hombro_1",name:"Movilidad hombro (flexión antepulsión)",sets:2,reps:"12-15",unit:"kg",note:"Superserie"},{id:"mov_hombro_2",name:"Movilidad hombro (extensión)",sets:2,reps:"12-15",unit:"kg",note:"Superserie"},{id:"press_mil",name:"Press militar mancuernas (sentada)",sets:3,reps:"8-12",unit:"kg",note:"Superserie"},{id:"elev_front",name:"Elevaciones frontales con disco",sets:3,reps:"8-12",unit:"kg",note:"Superserie"},{id:"renegade",name:"Renegade row",sets:3,reps:"8-12",unit:"kg"},{id:"aperturas_post",name:"Aperturas posteriores hombro",sets:3,reps:"12-15",unit:"kg"},{id:"press_franc",name:"Press francés en banco",sets:3,reps:"8-12",unit:"kg"}]},domingo:{name:"Domingo",emoji:"🌿",cardio:"15 min calentamiento + 30 min cardio final",exercises:[{id:"puente_gluteo",name:"Puente de glúteo",sets:2,reps:"15",unit:"kg",note:"Calentamiento"},{id:"desplaz_lateral",name:"Desplazamiento lateral con banda",sets:2,reps:"20",unit:"banda",note:"Calentamiento"},{id:"hip_thrust",name:"Hip Thrust",sets:3,reps:"8-12",unit:"kg"},{id:"prensa",name:"Prensa inclinada",sets:3,reps:"10-14",unit:"kg"},{id:"zancadas",name:"Zancadas",sets:3,reps:"8-12",unit:"kg"},{id:"ext_cadera_polea",name:"Extensión de cadera en polea baja",sets:3,reps:"8-12",unit:"kg"},{id:"plancha_dom",name:"Plancha isométrica",sets:3,reps:"45-60s",unit:"seg"},{id:"knee_raise",name:"Knee raise",sets:3,reps:"12-15",unit:"corporal"}]}};
+const R={lunes:{name:"Lunes",emoji:"🍑",cardio:null,exercises:[{id:"puente_gluteo",name:"Puente de glúteo",sets:2,reps:"15",unit:"kg",note:"Calentamiento"},{id:"desplaz_lateral",name:"Desplazamiento lateral con banda",sets:2,reps:"20",unit:"banda",note:"Calentamiento"},{id:"zancadas_manc",name:"Zancadas con mancuernas",sets:3,reps:"20",unit:"kg c/mano"},{id:"peso_muerto",name:"Peso muerto",sets:3,reps:"15",unit:"kg"},{id:"kettlebell_swing",name:"Kettlebell swing",sets:3,reps:"20",unit:"kg"}]},martes:{name:"Martes",emoji:"🦵",cardio:"15 min calentamiento",exercises:[{id:"puente_gluteo",name:"Puente de glúteo",sets:2,reps:"15",unit:"kg",note:"Calentamiento"},{id:"desplaz_lateral",name:"Desplazamiento lateral con banda",sets:2,reps:"20",unit:"banda",note:"Calentamiento"},{id:"squat_sumo",name:"Sentadilla sumo en multipower",sets:3,reps:"8-12",unit:"kg"},{id:"hip_thrust_maq",name:"Hip Thrust con máquina",sets:3,reps:"8-12",unit:"kg"},{id:"peso_muerto_rum",name:"Peso muerto rumano",sets:3,reps:"8-12",unit:"kg"},{id:"abduccion",name:"Abducción de cadera en máquina",sets:3,reps:"10+10",unit:"kg",note:"10 pesadas + 10 ligeras"},{id:"gemelos",name:"Extensión de gemelos",sets:3,reps:"8-12",unit:"kg"},{id:"plancha",name:"Plancha isométrica",sets:3,reps:"45-60s",unit:"seg"}]},jueves:{name:"Jueves",emoji:"💪",cardio:"15 min cardio",exercises:[{id:"mov_hombro_jue",name:"Movilidad de hombro",sets:2,reps:"12-15",unit:"kg",note:"Superserie calentamiento"},{id:"flexiones",name:"Flexiones",sets:3,reps:"12",unit:"corporal"},{id:"remo_maquina",name:"Remo en máquina",sets:3,reps:"8-12",unit:"kg"},{id:"remo_uni",name:"Remo unilateral con mancuerna",sets:3,reps:"8-12",unit:"kg"},{id:"elev_lat",name:"Elevaciones laterales",sets:3,reps:"10+10",unit:"kg",note:"10 pesadas + 10 ligeras"},{id:"press_arnold",name:"Press Arnold",sets:3,reps:"8-12",unit:"kg"},{id:"curl_biceps",name:"Curl de bíceps con mancuernas",sets:3,reps:"8-12",unit:"kg"}]},viernes:{name:"Viernes",emoji:"🏋️",cardio:"15 min calentamiento",exercises:[{id:"puente_gluteo",name:"Puente de glúteo",sets:2,reps:"15",unit:"kg",note:"Calentamiento"},{id:"desplaz_lateral",name:"Desplazamiento lateral con banda",sets:2,reps:"20",unit:"banda",note:"Calentamiento"},{id:"squat_bulgara",name:"Sentadilla búlgara con mancuernas",sets:3,reps:"8-12",unit:"kg"},{id:"squat_step",name:"Sentadilla en STEP (ROM aumentado)",sets:3,reps:"12-15",unit:"kg"},{id:"hyperext",name:"Hiperextensión 45°",sets:3,reps:"10+10",unit:"kg",note:"10 pesadas + 10 ligeras"},{id:"leg_press_fem",name:"Leg press femoral (máquina)",sets:3,reps:"8-12",unit:"kg"},{id:"ext_cuad",name:"Extensión de cuádriceps",sets:3,reps:"10+10",unit:"kg",note:"10 pesadas + 10 ligeras"}]},sabado:{name:"Sábado",emoji:"🔥",cardio:"15 min cardio + 30 min cardio final",exercises:[{id:"mov_hombro_sab",name:"Movilidad de hombro",sets:2,reps:"12-15",unit:"kg",note:"Superserie calentamiento"},{id:"renegade",name:"Renegade row",sets:3,reps:"8-12",unit:"kg"},{id:"press_mil",name:"Press militar mancuernas (sentada)",sets:3,reps:"8-12",unit:"kg",note:"Superserie con elev. frontales"},{id:"elev_front",name:"Elevaciones frontales con disco",sets:3,reps:"8-12",unit:"kg",note:"Superserie"},{id:"dorsal_maq",name:"Dorsal en máquina",sets:3,reps:"8-12",unit:"kg"},{id:"press_franc",name:"Press francés en banco",sets:3,reps:"8-12",unit:"kg"}]},domingo:{name:"Domingo",emoji:"🌿",cardio:"15 min calentamiento + 30 min cardio final",exercises:[{id:"puente_gluteo",name:"Puente de glúteo",sets:2,reps:"15",unit:"kg",note:"Calentamiento"},{id:"desplaz_lateral",name:"Desplazamiento lateral con banda",sets:2,reps:"20",unit:"banda",note:"Calentamiento"},{id:"hip_thrust",name:"Hip Thrust",sets:3,reps:"8-12",unit:"kg"},{id:"prensa",name:"Prensa inclinada",sets:3,reps:"10-14",unit:"kg"},{id:"zancadas",name:"Zancadas",sets:3,reps:"8-12",unit:"kg"},{id:"ext_cadera_polea",name:"Extensión de cadera en polea baja",sets:3,reps:"8-12",unit:"kg"},{id:"plancha_dom",name:"Plancha isométrica",sets:3,reps:"45-60s",unit:"seg"},{id:"knee_raise",name:"Knee raise",sets:3,reps:"12-15",unit:"corporal"}]}};
 const ORDER=['lunes','martes','jueves','viernes','sabado','domingo'];
 const WMAP={0:'domingo',1:'lunes',2:'martes',3:null,4:'jueves',5:'viernes',6:'sabado'};
 let curDay=null,wSets={},myCharts={},timerInterval=null,timerStart=null,curWorkoutDate=null;
@@ -946,6 +1019,7 @@ function renderWorkout(){
           <p style="font-size:14px;font-weight:600;${allDone?'color:var(--success)':''}">${allDone?'✅ ':''}${ex.name}<\/p>
           <p style="font-size:11px;color:var(--text2);margin-top:2px">${ex.sets}×${ex.reps} ${ex.unit}${ex.note?' · '+ex.note:''} · ${doneCnt}/${ex.sets}<\/p>
         <\/div>
+        <button onclick="event.stopPropagation();showSwapModal(${ei})" style="background:rgba(124,106,247,.1);border:1px solid rgba(124,106,247,.2);border-radius:8px;color:#7c6af7;font-size:11px;padding:4px 8px;cursor:pointer;margin-right:6px;flex-shrink:0">Cambiar<\/button>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="6,9 12,15 18,9"/><\/svg>
       <\/div>
       <div class="ex-bd${ei>0?' hidden':''}" id="eb-${ei}">
@@ -1009,6 +1083,168 @@ function togSet(ei,si){
 
   if(done===total)toast('¡Entreno completado! 🎉');
 }
+
+// ── SWAP EXERCISE ────────────────────────────────────────────────
+let _swapEi=-1;
+const COMMON_EXERCISES=[
+  // Piernas/Glúteos
+  'Sentadilla con barra','Sentadilla goblet','Sentadilla búlgara','Sentadilla sumo',
+  'Zancadas','Peso muerto','Peso muerto rumano','Hip Thrust','Puente de glúteo',
+  'Extensión de cuádriceps','Prensa de piernas','Leg press femoral',
+  'Abducción de cadera','Aducción de cadera','Gemelos de pie','Kettlebell swing',
+  // Espalda
+  'Dominadas','Remo en máquina','Remo unilateral con mancuerna',
+  'Dorsal en máquina','Remo en polea baja',
+  // Hombros
+  'Press militar','Press Arnold','Elevaciones laterales','Elevaciones frontales',
+  // Bíceps/Tríceps
+  'Curl de bíceps','Curl martillo','Curl en polea','Press francés','Extensión tríceps polea',
+  // Core
+  'Plancha','Knee raise','Dead bug','Russian twist',
+  // Otros
+  'Flexiones','Renegade row','Burpees','Hiperextensión 45°',
+];
+
+function showSwapModal(ei){
+  _swapEi=ei;
+  const ex=R[curDay].exercises[ei];
+  document.getElementById('swap-replacing').textContent='Sustituyendo: '+ex.name;
+  document.getElementById('swap-input').value='';
+  document.getElementById('swap-sets').value=ex.sets;
+  document.getElementById('swap-reps').value=ex.reps;
+  document.getElementById('swap-unit').value=ex.unit;
+  document.getElementById('swap-suggestions').innerHTML='';
+  document.getElementById('swap-modal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('swap-input').focus(),300);
+}
+function hideSwapModal(){document.getElementById('swap-modal').classList.add('hidden');_swapEi=-1;}
+
+function filterSwapSuggestions(val){
+  const cont=document.getElementById('swap-suggestions');
+  cont.innerHTML='';
+  if(!val||val.length<2)return;
+  const matches=COMMON_EXERCISES.filter(e=>e.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''))).slice(0,6);
+  matches.forEach(name=>{
+    const btn=document.createElement('button');
+    btn.style.cssText='width:100%;background:#1c1c26;border:1px solid #2a2a38;border-radius:8px;color:#f0f0f5;font-size:13px;padding:9px 12px;cursor:pointer;text-align:left;margin-bottom:6px;display:block';
+    btn.textContent=name;
+    btn.onclick=()=>{document.getElementById('swap-input').value=name;cont.innerHTML='';};
+    cont.appendChild(btn);
+  });
+}
+
+function confirmSwap(permanent){
+  const name=document.getElementById('swap-input').value.trim();
+  if(!name){toast('Escribe el nombre del ejercicio');return;}
+  const sets=parseInt(document.getElementById('swap-sets').value)||3;
+  const reps=document.getElementById('swap-reps').value||'10';
+  const unit=document.getElementById('swap-unit').value||'kg';
+  const newEx={id:'swap_'+Date.now(),name,sets,reps,unit};
+
+  // replace in current workout session
+  const oldEx=R[curDay].exercises[_swapEi];
+  wSets[newEx.id]=Array.from({length:sets},()=>({reps:'',weight:'',done:false}));
+  delete wSets[oldEx.id];
+  R[curDay].exercises[_swapEi]=newEx;
+
+  if(permanent){
+    // save to localStorage as custom routine
+    const customR=gs('customRoutine',{});
+    if(!customR[curDay])customR[curDay]=JSON.parse(JSON.stringify(R[curDay].exercises));
+    customR[curDay][_swapEi]=newEx;
+    ss('customRoutine',customR);
+    toast('✓ Cambiado y guardado en tu rutina');
+  } else {
+    toast('✓ Cambiado solo para hoy');
+  }
+  hideSwapModal();
+  renderWorkout();
+  // reopen the panel that was open
+  const b=document.getElementById('eb-'+_swapEi);
+  if(b)b.classList.remove('hidden');
+}
+
+// ── ROUTINE EDITOR ───────────────────────────────────────────────
+function showRoutineEdit(){
+  // load custom routine overrides
+  loadCustomRoutine();
+  document.getElementById('routine-edit-day').value='lunes';
+  renderRoutineEditDay();
+  document.getElementById('routine-edit-modal').classList.remove('hidden');
+}
+function hideRoutineEdit(){document.getElementById('routine-edit-modal').classList.add('hidden');}
+
+function loadCustomRoutine(){
+  const customR=gs('customRoutine',{});
+  Object.keys(customR).forEach(day=>{
+    if(R[day])R[day].exercises=customR[day];
+  });
+}
+
+function renderRoutineEditDay(){
+  const day=document.getElementById('routine-edit-day').value;
+  const cont=document.getElementById('routine-edit-list');
+  cont.innerHTML='';
+  R[day].exercises.forEach((ex,ei)=>{
+    const row=document.createElement('div');
+    row.style.cssText='background:#1c1c26;border-radius:10px;padding:12px;margin-bottom:8px';
+    row.innerHTML=
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+      +'<input type="text" value="'+ex.name+'" id="re-name-'+ei+'" style="flex:1;font-size:14px;font-weight:600;background:none;border:none;color:#f0f0f5;outline:none;padding:0">'
+      +'<button onclick="deleteRoutineEx(\''+day+'\','+ei+')" style="background:none;border:none;color:#555568;font-size:16px;cursor:pointer;padding:0 4px">🗑<\/button>'
+      +'<\/div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+      +'<div><label>Series<\/label><input type="number" value="'+ex.sets+'" id="re-sets-'+ei+'" inputmode="numeric" style="text-align:center"><\/div>'
+      +'<div><label>Reps<\/label><input type="text" value="'+ex.reps+'" id="re-reps-'+ei+'" style="text-align:center"><\/div>'
+      +'<div><label>Unidad<\/label><input type="text" value="'+ex.unit+'" id="re-unit-'+ei+'" style="text-align:center"><\/div>'
+      +'<\/div>';
+    cont.appendChild(row);
+  });
+  // save button
+  const saveBtn=document.createElement('button');
+  saveBtn.className='btn btn-p';
+  saveBtn.style.marginTop='8px';
+  saveBtn.textContent='Guardar cambios de '+R[day].name;
+  saveBtn.onclick=()=>saveRoutineDay(day);
+  cont.appendChild(saveBtn);
+}
+
+function saveRoutineDay(day){
+  const exCount=R[day].exercises.length;
+  for(let ei=0;ei<exCount;ei++){
+    const nameEl=document.getElementById('re-name-'+ei);
+    const setsEl=document.getElementById('re-sets-'+ei);
+    const repsEl=document.getElementById('re-reps-'+ei);
+    const unitEl=document.getElementById('re-unit-'+ei);
+    if(nameEl)R[day].exercises[ei].name=nameEl.value;
+    if(setsEl)R[day].exercises[ei].sets=parseInt(setsEl.value)||3;
+    if(repsEl)R[day].exercises[ei].reps=repsEl.value;
+    if(unitEl)R[day].exercises[ei].unit=unitEl.value;
+  }
+  const customR=gs('customRoutine',{});
+  customR[day]=JSON.parse(JSON.stringify(R[day].exercises));
+  ss('customRoutine',customR);
+  toast('✓ Rutina del '+R[day].name+' guardada');
+  renderRoutineEditDay();
+}
+
+function deleteRoutineEx(day,ei){
+  if(!confirm('¿Eliminar este ejercicio de la rutina?'))return;
+  R[day].exercises.splice(ei,1);
+  const customR=gs('customRoutine',{});
+  customR[day]=JSON.parse(JSON.stringify(R[day].exercises));
+  ss('customRoutine',customR);
+  renderRoutineEditDay();
+}
+
+function addRoutineExercise(){
+  const day=document.getElementById('routine-edit-day').value;
+  R[day].exercises.push({id:'custom_'+Date.now(),name:'Nuevo ejercicio',sets:3,reps:'10',unit:'kg'});
+  renderRoutineEditDay();
+  // scroll to bottom
+  document.getElementById('routine-edit-list').lastChild?.scrollIntoView({behavior:'smooth'});
+}
+// ── END ROUTINE EDITOR ───────────────────────────────────────────
 
 function cancelWorkout(){
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
@@ -1643,6 +1879,12 @@ function calcStreakUpTo(hist,year,month){
   return s;
 }
 
+// Load any saved custom routine overrides
+(function(){
+  const customR=gs('customRoutine',{});
+  Object.keys(customR).forEach(day=>{if(R[day])R[day].exercises=customR[day];});
+})();
+
 renderHome();
 
 // Limpiar cualquier Service Worker antiguo
@@ -1652,5 +1894,6 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+
 </body>
 </html>
